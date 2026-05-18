@@ -1,0 +1,197 @@
+:root {
+  --bg: #0a0a12;
+  --panel: #141422;
+  --text: #eeeef4;
+  --muted: #8888aa;
+  --accent: #9b59b6;
+  --critical: #e74c3c;
+  --warn: #f39c12;
+  --ok: #2ecc71;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+.mag-header {
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #1a1030 0%, #16213e 100%);
+  border-bottom: 2px solid var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mag-header h1 { font-size: 1rem; font-weight: 700; }
+.mag-header .sub { font-size: 0.75rem; color: var(--muted); width: 100%; }
+
+.mag-main {
+  padding: 1rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.mag-gauge-wrap {
+  position: relative;
+  width: min(280px, 90vw);
+  height: min(280px, 90vw);
+  margin: 1rem auto;
+}
+
+.mag-gauge-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    var(--ok) 0deg,
+    var(--warn) 120deg,
+    var(--critical) 200deg,
+    var(--critical) 360deg
+  );
+  padding: 12px;
+  box-shadow: 0 0 40px rgba(155, 89, 182, 0.25);
+  transition: box-shadow 0.2s;
+}
+
+.mag-gauge-ring.alert {
+  box-shadow: 0 0 48px rgba(231, 76, 60, 0.65);
+  animation: mag-pulse 0.4s infinite;
+}
+
+.mag-gauge-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.mag-field-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.mag-gauge-ring.alert .mag-field-value { color: var(--critical); }
+
+.mag-field-unit { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+.mag-delta { font-size: 1rem; margin-top: 0.5rem; color: var(--warn); }
+.mag-status-text { font-size: 0.8rem; margin-top: 0.75rem; color: var(--muted); max-width: 200px; }
+
+.mag-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.mag-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--ok), var(--warn), var(--critical));
+  border-radius: 4px;
+  transition: width 0.08s linear;
+}
+
+.mag-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.mag-btn {
+  padding: 0.65rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+.mag-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.mag-btn-secondary { background: #2d2d44; color: var(--text); }
+.mag-btn-danger { background: var(--critical); }
+
+.mag-panel {
+  background: var(--panel);
+  border: 1px solid #2d2d44;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.mag-panel h2 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+.mag-panel p, .mag-panel li { color: var(--muted); line-height: 1.5; margin-bottom: 0.35rem; }
+.mag-panel ul { padding-left: 1.2rem; }
+
+.mag-alert-banner {
+  display: none;
+  background: var(--critical);
+  color: #fff;
+  text-align: center;
+  padding: 0.85rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  animation: mag-pulse 0.5s infinite;
+}
+
+.mag-alert-banner.visible { display: block; }
+
+.mag-hits {
+  list-style: none;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+
+.mag-hits li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #2d2d44;
+  color: var(--text);
+}
+
+.mag-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.mag-slider-row input[type="range"] { flex: 1; }
+
+.mag-error {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid var(--critical);
+  color: #ffb4a8;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+@keyframes mag-pulse {
+  50% { opacity: 0.85; }
+}
+
+.mag-link { color: var(--accent); text-decoration: none; font-size: 0.85rem; }

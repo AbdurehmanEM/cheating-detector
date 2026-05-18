@@ -1,77 +1,65 @@
-<?php require_once __DIR__ . '/auth_check.php'; ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vision Detection — Exam Phone Detection</title>
-    <link rel="stylesheet" href="assets/css/vision.css">
-</head>
-<body>
-    <header class="vision-header">
-        <div>
-            <h1>AI Vision Detection</h1>
-            <p class="sub">Uses this PC's webcam and on-device AI to detect mobile phones in the exam hall</p>
-        </div>
-        <a class="vision-link" href="index.php">Dashboard</a>
-    </header>
+<?php
+declare(strict_types=1);
 
-    <div id="alert-banner" class="vision-banner">MOBILE PHONE DETECTED — INSPECT IMMEDIATELY</div>
+require_once __DIR__ . '/bootstrap.php';
 
-    <div class="vision-layout">
-        <div>
-            <p id="session-label" class="vision-status-line" style="margin-bottom:0.5rem">Loading…</p>
-            <div id="error-box" class="vision-error" style="display:none"></div>
+$authUser = Auth::requireLogin();
+$pdo = Database::connection();
+$session = SessionManager::activeSession($pdo);
 
-            <div id="vision-stage" class="vision-stage">
-                <div id="model-loading" class="vision-model-loading">Loading AI vision model…</div>
-                <span id="overlay-status" class="vision-overlay-label">Initializing</span>
-                <video id="vision-video" playsinline muted autoplay></video>
-                <canvas id="vision-canvas"></canvas>
-            </div>
-        </div>
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    jsonResponse([
+        'ok' => true,
+        'user' => $authUser,
+        'session' => $session ? [
+            'id' => (int) $session['id'],
+            'exam_name' => $session['exam_name'],
+            'status' => $session['status'],
+        ] : null,
+    ]);
+}
 
-        <aside class="vision-side">
-            <div class="vision-panel">
-                <h2>Controls</h2>
-                <div class="vision-controls">
-                    <button type="button" class="vision-btn" id="btn-camera">Start camera</button>
-                    <button type="button" class="vision-btn vision-btn-secondary" id="btn-stop-camera" disabled>Stop camera</button>
-                    <button type="button" class="vision-btn" id="btn-start-ai" disabled>Start AI detection</button>
-                    <button type="button" class="vision-btn vision-btn-secondary" id="btn-stop-ai" disabled>Stop AI</button>
-                </div>
-                <div class="vision-slider-row">
-                    <label for="confidence">Min confidence</label>
-                    <input type="range" id="confidence" min="40" max="95" value="55" step="5">
-                    <span id="confidence-val">55%</span>
-                </div>
-                <div class="vision-slider-row">
-                    <label for="scan-speed">Scan speed</label>
-                    <input type="range" id="scan-speed" min="100" max="400" value="200" step="50">
-                    <span id="scan-speed-val">Normal</span>
-                </div>
-                <p class="vision-status-line">Detections: <strong id="hit-count">0</strong></p>
-            </div>
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonError('GET or POST required', 405);
+}
 
-            <div class="vision-panel">
-                <h2>How it works</h2>
-                <ul>
-                    <li>Point the PC webcam at desks, hands, or bags.</li>
-                    <li>AI (COCO-SSD) recognizes <strong>cell phones</strong> in the live video.</li>
-                    <li>Red boxes and an alarm appear when a phone is seen.</li>
-                    <li>Events are saved to the exam timeline when a session is active.</li>
-                </ul>
-            </div>
+$body = json_decode(file_get_contents('php://input') ?: '{}', true);
+if (!is_array($body)) {
+    jsonError('Invalid JSON');
+}
 
-            <div class="vision-panel">
-                <h2>Recent detections</h2>
-                <ul id="hits-list" class="vision-hits"></ul>
-            </div>
-        </aside>
-    </div>
+if (!$session) {
+    jsonError('No active exam session', 409);
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2"></script>
-    <script src="assets/js/vision.js"></script>
-</body>
-</html>
+$action = $body['action'] ?? 'detect';
+$sid = (int) $session['id'];
+
+if ($action === 'detect') {
+    $label = trim((string) ($body['label'] ?? 'cell phone'));
+    $score = isset($body['score']) ? round((float) $body['score'], 3) : 0;
+    $count = max(1, (int) ($body['count'] ?? 1));
+    $details = sprintf(
+        'AI vision — %s detected (confidence %.0f%%, %d in frame)',
+        $label,
+        $score * 100,
+        $count
+    );
+    SessionManager::logTimeline($pdo, $sid, 'vision_phone', null, $details);
+    SessionManager::logAction(
+        $pdo,
+        $sid,
+        $authUser['display_name'] ?? 'Invigilator',
+        'vision_scan',
+        null,
+        $details
+    );
+
+    jsonResponse([
+        'ok' => true,
+        'logged' => true,
+        'details' => $details,
+    ]);
+}
+
+jsonError('Unknown action', 400);
