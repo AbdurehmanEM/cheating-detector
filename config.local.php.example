@@ -1,0 +1,16 @@
+<?php
+/**
+ * Copy to config.local.php and adjust for your hall / server.
+ */
+return [
+    'database' => [
+        'driver' => 'mysql',
+        'mysql' => [
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'database' => 'Exam_phone_detector',
+            'username' => 'root',
+            'password' => '',
+        ],
+    ],
+];
